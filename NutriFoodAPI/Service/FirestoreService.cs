@@ -8,7 +8,7 @@ namespace NutriFoodAPI.Service
 {
     public class FirestoreService
     {
-        private readonly FirestoreContext _conexaoBanco;
+        private readonly FirestoreContext _conexaoBanco;    
 
         /// <summary>
         /// Inicializa uma nova instância da classe FirestoreService utilizando 
