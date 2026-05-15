@@ -16,7 +16,7 @@ namespace NutriFoodAPI.Controllers
         }
 
         /// <summary>
-        /// Recebe dados da Squad 1, valida na API Ninjas e persiste no Firebase.
+        /// Recebe dados da Squad 1, valida na API Ninjas e persiste no Firebase com ID Sequencial.
         /// </summary>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
@@ -28,41 +28,43 @@ namespace NutriFoodAPI.Controllers
         {
             try
             {
-                /// Validação campos obrigatórios (ex: Nome)
+                // 1. Validação de segurança
                 if (alimento == null || string.IsNullOrWhiteSpace(alimento.Nome))
                 {
                     return BadRequest("O nome do alimento é obrigatório e não pode estar vazio.");
                 }
 
-                /// Valida o alimento na API Ninjas e salva no Firestore
+                /// Chama o Service para realizar a Transação do ID Sequencial e a consulta na API Ninjas
                 var resultado = await _firestoreService.SalvarAlimentoValidado(alimento);
 
-                /// Se a API Ninjas não encontrar o alimento, retorna 404 Not Found
+                /// Verifica se o alimento não foi encontrado na API Ninjas
                 if (resultado == null)
                 {
-                    return NotFound(new 
-                    { mensagem = $"O alimento '{alimento.Nome}' " +
-                    $"não foi localizado na base nutricional oficial." });
+                    return NotFound(new
+                    {
+                        mensagem = $"O alimento '{alimento.Nome}' " +
+                        $"não foi localizado na base nutricional oficial."
+                    });
                 }
 
-                /// Retorna 201 Created com os dados do alimento validado
-                return Created("", new
+                /// Retorna o alimento com ID Sequencial.              
+                return CreatedAtAction(nameof(Post), new { id = resultado.Id }, new
                 {
                     mensagem = "Alimento validado e salvo com sucesso!",
+                    idSequencial = resultado.Id,
                     dados = resultado
                 });
             }
-
             /// Tratamento específico para falhas na comunicação com a API Ninjas
             catch (HttpRequestException)
-            {           
-                return StatusCode(502,
+            {
+                return StatusCode(502, 
                     "O serviço de validação nutricional externo está temporariamente indisponível.");
             }
-            /// Tratamento genérico para outras exceções, como falhas no Firestore ou erros inesperados
+            /// Tratamento genérico
             catch (Exception ex)
-            {                
-                return StatusCode(500,
+            {
+                return StatusCode(500, 
                     $"Erro interno no servidor: {ex.Message}");
             }
         }

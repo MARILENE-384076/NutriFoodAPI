@@ -1,50 +1,88 @@
 ﻿using Google.Cloud.Firestore;
 using NutriFoodAPI.Data;
 using NutriFoodAPI.Models;
-using System;
-using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace NutriFoodAPI.Service
 {
     public class FirestoreService
     {
-        private readonly FirestoreContext _conexaoBanco;    
+        private readonly FirestoreContext _contexto;
+        private readonly HttpClient _http;
+        private readonly string _chaveApi;
 
-        /// <summary>
-        /// Inicializa uma nova instância da classe FirestoreService utilizando 
-        /// o contexto do Firestore especificado.
-        /// </summary>
-        /// <param name="conexaoBanco">A instância de FirestoreContext usada 
-        /// para operações no banco de dados. Não pode ser nula.</param>
-        public FirestoreService(FirestoreContext conexaoBanco)
+        public FirestoreService(FirestoreContext contexto, HttpClient http, IConfiguration config)
         {
-            _conexaoBanco = conexaoBanco;
+            _contexto = contexto;
+            _http = http;
+            _chaveApi = config["ApiConfigs:NinjaApiKey"];
         }
 
-        /// <summary>
-        /// Salva de forma assíncrona um idtem do AlimentoValidado no banco de dados Firestore.
-        /// </summary>
-        /// <param name="alimento">O item de alimento validado a ser persistido. Não pode ser nulo. 
-        /// A propriedade Id do item é usada como o identificador do documento.</param>
-        /// <returns>Uma tarefa que representa a operação de salvamento assíncrona.</returns>
-        /// <exception cref="Exception">Lançada se ocorrer um erro ao tentar salvar o item no Firestore.
-        /// </exception>
-        public async Task SalvarAlimentoValidado(AlimentoValidado alimento)
+        public async Task<AlimentoValidado?> SalvarAlimentoValidado(AlimentoValidado alimento)
         {
             try
             {
-                // Acessa a coleção "AlimentosValidados" usando a instância do Database
-                // Se a coleção não existir, o Firestore cria.
-                DocumentReference documento = _conexaoBanco.Database
-                    .Collection("AlimentosValidados")
-                    .Document(alimento.Id);
+                // 1. Validação Externa
+                var dadosOficiais = await ConsultarApiNutricional(alimento.Nome);
+                if (dadosOficiais == null) return null;
 
-                await documento.SetAsync(alimento);
+                // 2. ID Sequencial Humano
+                int novoId = await GerarProximoIdSequencial();
+
+                // 3. Enriquecimento
+                alimento.Id = novoId.ToString();
+                alimento.Calorias = dadosOficiais.Calorias;
+                alimento.DataValidacao = DateTime.UtcNow;
+
+                // 4. Persistência
+                await PersistirNoFirestore(alimento);
+
+                return alimento;
             }
             catch (Exception ex)
             {
-                throw new Exception($"Erro ao salvar no Firestore: {ex.Message}");
+                throw new Exception($"Erro NutriFoodAPI: {ex.Message}");
             }
+        }
+
+        private async Task<int> GerarProximoIdSequencial()
+        {
+            DocumentReference contadorRef = _contexto.Database
+                .Collection("configuracoes")
+                .Document("contador_alimentos");
+
+            return await _contexto.Database.RunTransactionAsync(async transaction =>
+            {
+                DocumentSnapshot snapshot = await transaction.GetSnapshotAsync(contadorRef);
+
+                int idAtual = snapshot.Exists && snapshot.TryGetValue("ultimoId", out int id) ? id : 0;
+                int proximoId = idAtual + 1;
+
+                transaction.Set(contadorRef, new 
+                { ultimoId = proximoId }, SetOptions.MergeAll);
+
+                return proximoId;
+            });
+        }
+
+        private async Task<AlimentoValidado?> ConsultarApiNutricional(string nome)
+        {
+            _http.DefaultRequestHeaders.Clear();
+            _http.DefaultRequestHeaders.Add("X-Api-Key", _chaveApi);
+            var response = await _http.GetAsync($"https://api.api-ninjas.com/v1/nutrition?query={nome}");
+            if (!response.IsSuccessStatusCode) return null;
+
+            var json = await response.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<List<AlimentoValidado>>(json)?.FirstOrDefault();
+        }
+
+        private async Task PersistirNoFirestore(AlimentoValidado alimento)
+        {
+            await _contexto.Database
+                .Collection("AlimentosValidados")
+                .Document(alimento.Id)
+                .SetAsync(alimento);
         }
     }
 }
