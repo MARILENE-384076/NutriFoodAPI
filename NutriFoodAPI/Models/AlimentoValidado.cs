@@ -4,8 +4,10 @@ using System.Text.Json.Serialization;
 
 namespace NutriFoodAPI.Models
 {
-    public class Alimento
+    public class AlimentoValidado
     {
+        [JsonPropertyName("id")]
+        public string Id { get; set; } = string.Empty;
         [JsonPropertyName("name")]
         public string Nome { get; set; } = string.Empty;
 
