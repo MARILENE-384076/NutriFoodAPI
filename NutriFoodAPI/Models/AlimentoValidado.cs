@@ -4,10 +4,10 @@ using System.Text.Json.Serialization;
 
 namespace NutriFoodAPI.Models
 {
-    [FirestoreData] 
+    [FirestoreData]
     public class AlimentoValidado
     {
-        [FirestoreProperty] 
+        [FirestoreProperty]
         [JsonPropertyName("id")]
         public string Id { get; set; } = string.Empty;
 
@@ -17,48 +17,48 @@ namespace NutriFoodAPI.Models
 
         [FirestoreProperty]
         [JsonPropertyName("calories")]
-        public double Calorias { get; set; } 
+        public decimal Calorias { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("serving_size_g")]
-        public double PorcaoGramas { get; set; }
+        public decimal PorcaoGramas { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("fat_total_g")]
-        public double GorduraTotal { get; set; }
+        public decimal GorduraTotal { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("fat_saturated_g")]
-        public double GorduraSaturada { get; set; }
+        public decimal GorduraSaturada { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("protein_g")]
-        public double Proteina { get; set; }
+        public decimal Proteina { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("sodium_mg")]
-        public double Sodio { get; set; }
+        public decimal Sodio { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("potassium_mg")]
-        public double Potassio { get; set; }
+        public decimal Potassio { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("cholesterol_mg")]
-        public double Colesterol { get; set; }
+        public decimal Colesterol { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("carbohydrates_total_g")]
-        public double Carboidratos { get; set; }
+        public decimal Carboidratos { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("fiber_g")]
-        public double Fibras { get; set; }
+        public decimal Fibras { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("sugar_g")]
-        public double Acucar { get; set; }
-        
+        public decimal Acucar { get; set; }
+
         [FirestoreProperty]
         public DateTime DataValidacao { get; set; }
     }
