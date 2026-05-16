@@ -156,7 +156,20 @@ namespace NutriFoodAPI.Controllers
                 });
             }
         }
-
+        /// <summary>
+        /// Obtém um alimento validado específico através do seu nome exato.
+        /// </summary>
+        /// <remarks>
+        /// Realiza uma busca filtrada na coleção do Firestore utilizando o nome fornecido na URL.
+        /// </remarks>
+        /// <param name="nome">Nome exato do alimento armazenado no banco de dados.</param>
+        /// <response code="200">Alimento encontrado com sucesso.</response>
+        /// <response code="404">Nenhum alimento foi encontrado com o nome informado.</response>
+        /// <response code="500">Erro interno no servidor ao tentar acessar o banco de dados.</response>
+        [HttpGet("buscar-por-nome/{nome}")]
+        [ProducesResponseType(typeof(AlimentoValidado), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetByName(string nome)
         {
             try
