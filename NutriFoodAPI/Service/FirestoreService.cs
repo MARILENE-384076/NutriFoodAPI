@@ -194,6 +194,39 @@ namespace NutriFoodAPI.Service
             }
         }
 
+        /// <summary>
+        /// Exclui um alimento validado do Firestore utilizando o ID Sequencial.
+        /// Retorna true se a exclusão foi feita ou false se o documento não existia.
+        /// </summary>
+        public async Task<bool> ExcluirAlimento(string id)
+        {
+            try
+            {
+                // Aponta para o documento específico dentro da coleção
+                DocumentReference documentoRef = _contexto.Database
+                    .Collection("AlimentosValidados")
+                    .Document(id);
+
+                // Busca o snapshot para garantir que o documento realmente existe antes de apagar
+                // Isso evita que tentemos deletar um documento que não existe, o que poderia
+                // causar confusão
+                DocumentSnapshot snapshot = await documentoRef.GetSnapshotAsync();
+
+                if (!snapshot.Exists)
+                    return false; // Retorna falso para avisar o Controller que o ID não foi achado
+
+                // Deleta o documento do Firestore
+                await documentoRef.DeleteAsync();
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                throw new 
+                    Exception($"Erro ao excluir alimento no Firestore: {ex.Message}");
+            }
+        }
+
         private async Task<int> GerarProximoIdSequencial()
         {
             DocumentReference contadorRef = _contexto.Database
