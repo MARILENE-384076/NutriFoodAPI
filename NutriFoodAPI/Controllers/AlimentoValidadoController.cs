@@ -22,6 +22,16 @@ namespace NutriFoodAPI.Controllers
         /// <summary>
         /// Recebe os dados da Squad 1, delega a validação ao Service e persiste no Firebase.
         /// </summary>
+        /// <remarks>
+        /// Envia o nome do alimento para uma API nutricional externa, mescla com as regras de negócio 
+        /// e salva o registro com um ID sequencial seguro no Firestore.        
+        /// </remarks>
+        /// <param name="alimentoExterno">Objeto contendo o nome do alimento a ser consultado e validado.</param>
+        /// <response code="201">Alimento validado e cadastrado com sucesso no banco de dados.</response>
+        /// <response code="400">Dados de requisição inválidos ou malformados.</response>
+        /// <response code="404">O alimento informado não foi encontrado na API nutricional externa.</response>
+        /// <response code="502">A API nutricional externa (API-Ninjas) está fora do ar ou indisponível.</response>
+        /// <response code="500">Erro interno no servidor ou falha de comunicação com o Firestore.</response>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -34,7 +44,8 @@ namespace NutriFoodAPI.Controllers
             {
                 if (alimentoExterno == null || string.IsNullOrWhiteSpace(alimentoExterno.Name))
                 {
-                    return BadRequest("O nome do alimento é obrigatório e não pode estar vazio.");
+                    return 
+                        BadRequest("O nome do alimento é obrigatório e não pode estar vazio.");
                 }
 
                 // Passa o objeto enviado pela Squad 1 para o Service
@@ -71,6 +82,7 @@ namespace NutriFoodAPI.Controllers
                 });
             }
         }
+
         /// <summary>
         /// Obtém a lista completa de todos os alimentos validados.
         /// </summary>
