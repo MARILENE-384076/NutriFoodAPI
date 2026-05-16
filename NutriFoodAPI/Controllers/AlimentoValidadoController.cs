@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Google.Api;
+using Google.Cloud.Firestore;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using NutriFoodAPI.Models;
 using NutriFoodAPI.Service;
 using System;
-using System.Threading.Tasks;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace NutriFoodAPI.Controllers
 {
@@ -44,7 +46,7 @@ namespace NutriFoodAPI.Controllers
             {
                 if (alimentoExterno == null || string.IsNullOrWhiteSpace(alimentoExterno.Name))
                 {
-                    return 
+                    return
                         BadRequest("O nome do alimento é obrigatório e não pode estar vazio.");
                 }
 
@@ -70,7 +72,7 @@ namespace NutriFoodAPI.Controllers
             }
             catch (HttpRequestException)
             {
-                return StatusCode(502, 
+                return StatusCode(502,
                     "O serviço de validação nutricional externo está temporariamente indisponível.");
             }
             catch (Exception)
@@ -101,11 +103,11 @@ namespace NutriFoodAPI.Controllers
             try
             {
                 var alimentos = await _firestoreService.ObterTodos();
-                
+
                 return Ok(alimentos);
             }
             catch (Exception)
-            {                
+            {
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar a listagem dos alimentos. " +
@@ -131,7 +133,7 @@ namespace NutriFoodAPI.Controllers
         public async Task<IActionResult> GetById(string id)
         {
             try
-            {                
+            {
                 var alimento = await _firestoreService.ObterPorId(id);
 
                 ///Se o objeto específico não existe no banco, retorna 404
@@ -142,11 +144,11 @@ namespace NutriFoodAPI.Controllers
                         mensagem = $"Alimento com o ID '{id}' não foi encontrado no sistema."
                     });
                 }
-                
+
                 return Ok(alimento);
             }
             catch (Exception)
-            {                
+            {
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar a busca do alimento. " +
@@ -154,5 +156,42 @@ namespace NutriFoodAPI.Controllers
                 });
             }
         }
+
+        public async Task<IActionResult> GetByName(string nome)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(nome))
+                {
+                    return
+                       BadRequest("O nome para busca não pode estar vazio.");
+                }
+
+                // Remove espaços extras nas pontas para evitar erros de digitação
+                var termoBusca = nome.Trim();
+
+                var alimentos = await
+                            _firestoreService.ObterAlimentosPorNome(termoBusca);
+
+                // Se a lista voltar vazia, retorna 404 informando que nada foi achado no banco
+                if (alimentos == null || alimentos.Count == 0)
+                {
+                    return NotFound(new
+                    { mensagem = $"Nenhum alimento contendo '{termoBusca}' " +
+                    $"foi encontrado no histórico do banco." });
+                }
+
+                return Ok(alimentos);
+            }
+            catch (Exception)
+            {                
+                return StatusCode(500, new
+                {
+                    mensagem = "Ocorreu um erro interno ao processar a busca do alimento pelo nome. " +
+                    "Por favor, tente novamente mais tarde."
+                });
+            }
+        }
+
     }
 }
