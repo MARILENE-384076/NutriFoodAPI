@@ -74,6 +74,38 @@ namespace NutriFoodAPI.Service
             }
         }
 
+        /// <summary>
+        /// Obtém todos os alimentos validados cadastrados na coleção do Firestore.
+        /// </summary>
+        public async Task<List<AlimentoValidado>> ObterTodos()
+        {
+            try
+            {
+                // Consulta a coleção "AlimentosValidados" no Firestore
+                Query colecao = _contexto.Database.Collection("AlimentosValidados");
+                QuerySnapshot snapshot = await colecao.GetSnapshotAsync();
+
+                List<AlimentoValidado> listaAlimentos = new List<AlimentoValidado>();
+
+                // Percorre os documentos retornados e converte cada um para o modelo AlimentoValidado
+                foreach (DocumentSnapshot documento in snapshot.Documents)
+                {
+                    if (documento.Exists)
+                    {
+                        AlimentoValidado alimento = documento.ConvertTo<AlimentoValidado>();
+                        listaAlimentos.Add(alimento);
+                    }
+                }
+
+                return listaAlimentos;
+            }
+            catch (Exception ex)
+            {
+                throw new
+                    Exception($"Erro ao buscar lista de alimentos no Firestore: {ex.Message}");
+            }
+        }
+
         private async Task<int> GerarProximoIdSequencial()
         {
             DocumentReference contadorRef = _contexto.Database
