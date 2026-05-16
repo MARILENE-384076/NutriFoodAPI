@@ -106,6 +106,36 @@ namespace NutriFoodAPI.Service
             }
         }
 
+        /// <summary>
+        /// Busca um alimento validado no Firestore pelo seu ID Sequencial.
+        /// </summary>
+        public async Task<AlimentoValidado?> ObterPorId(string id)
+        {
+            try
+            {
+                // Aponta diretamente para o documento específico dentro da coleção
+                DocumentReference docRef = _contexto.Database
+                    .Collection("AlimentosValidados")
+                    .Document(id);
+
+                // Busca o snapshot do documento de forma assíncrona
+                DocumentSnapshot snapshot = await 
+                    docRef.GetSnapshotAsync();
+
+                // Se o documento não existir no Firestore,
+                // retorna null para a Controller tratar como 404
+                if (!snapshot.Exists)
+                    return null;
+
+                // Converte os campos do documento para a classe AlimentoValidado
+                return snapshot.ConvertTo<AlimentoValidado>();
+            }
+            catch (Exception ex)
+            {                
+                throw new 
+                    Exception($"Erro ao buscar o ID {id} no Firestore: {ex.Message}");
+            }
+        }
         private async Task<int> GerarProximoIdSequencial()
         {
             DocumentReference contadorRef = _contexto.Database
