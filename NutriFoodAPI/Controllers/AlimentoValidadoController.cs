@@ -16,9 +16,16 @@ namespace NutriFoodAPI.Controllers
     {
         private readonly FirestoreService _firestoreService;
 
-        public AlimentoValidadoController(FirestoreService firestoreService)
+        //Declaração do logger para rastreabilidade e monitoramento de erros
+        private readonly ILogger<AlimentoValidadoController> _logger;
+
+        // Injeção de dependências do FirestoreService e do Logger
+        public AlimentoValidadoController(
+            FirestoreService firestoreService,
+            ILogger<AlimentoValidadoController> logger)
         {
             _firestoreService = firestoreService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -46,9 +53,13 @@ namespace NutriFoodAPI.Controllers
             {
                 if (alimentoExterno == null || string.IsNullOrWhiteSpace(alimentoExterno.Name))
                 {
+                    _logger.LogWarning("Tentativa de cadastro com dados ou nome inválidos/vazios.");
                     return
                         BadRequest("O nome do alimento é obrigatório e não pode estar vazio.");
                 }
+
+                _logger.LogInformation("Iniciando validação e persistência do alimento:" +
+                    " {NomeAlimento}", alimentoExterno.Name);
 
                 // Passa o objeto enviado pela Squad 1 para o Service
                 var resultado = await _firestoreService.SalvarAlimentoValidado(alimentoExterno);
@@ -56,11 +67,16 @@ namespace NutriFoodAPI.Controllers
                 // Verifica se o alimento não foi encontrado na API Ninjas
                 if (resultado == null)
                 {
+                    _logger.LogWarning("Alimento '{NomeAlimento}' " +
+                        "não foi localizado na API externa.", alimentoExterno.Name);
                     return NotFound(new
                     {
                         mensagem = $"O alimento '{alimentoExterno.Name}' não foi localizado na base nutricional oficial."
                     });
                 }
+
+                _logger.LogInformation("Alimento '{NomeAlimento}' salvo com sucesso " +
+                    "com o ID Sequencial: {IdSequencial}", resultado.Nome, resultado.Id);
 
                 // Retorna o alimento com ID Sequencial gerado pelo Service
                 return CreatedAtAction(nameof(Post), new { id = resultado.Id }, new
@@ -72,11 +88,17 @@ namespace NutriFoodAPI.Controllers
             }
             catch (HttpRequestException)
             {
+                _logger.LogError( "Falha de rede ou timeout ao consultar a API externa " +
+                    "para o alimento: {NomeAlimento}", alimentoExterno?.Name);
+
                 return StatusCode(502,
                     "O serviço de validação nutricional externo está temporariamente indisponível.");
             }
             catch (Exception)
             {
+                _logger.LogError("Erro crítico no endpoint POST ao processar " +
+                    "o alimento: {NomeAlimento}", alimentoExterno?.Name);
+
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar e salvar o alimento. " +
@@ -102,12 +124,19 @@ namespace NutriFoodAPI.Controllers
         {
             try
             {
+                _logger.LogInformation("Solicitando a listagem completa de alimentos validados.");
+
                 var alimentos = await _firestoreService.ObterTodos();
+
+                _logger.LogInformation("Listagem realizada com sucesso. " +
+                    "Total de registros: {Quantidade}", alimentos?.Count ?? 0);
 
                 return Ok(alimentos);
             }
             catch (Exception)
             {
+                _logger.LogError("Erro crítico no endpoint GET ao listar todos os alimentos.");
+
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar a listagem dos alimentos. " +
