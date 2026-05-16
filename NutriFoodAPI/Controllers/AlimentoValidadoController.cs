@@ -208,7 +208,20 @@ namespace NutriFoodAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Remove um alimento validado do sistema através do seu ID Sequencial.
+        /// </summary>
+        /// <param name="id">O ID Sequencial do alimento a ser removido.</param>
+        /// <returns>Retorna uma mensagem de sucesso ou o erro correspondente.</returns>
+        /// <response code="200">Alimento removido com sucesso do banco de dados.</response>
+        /// <response code="400">O ID fornecido é inválido, nulo ou vazio.</response>
+        /// <response code="404">O ID do alimento não foi localizado no sistema.</response>
+        /// <response code="500">Erro interno no servidor ao processar a exclusão de forma segura.</response>
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Delete(string id)
         {
             try
