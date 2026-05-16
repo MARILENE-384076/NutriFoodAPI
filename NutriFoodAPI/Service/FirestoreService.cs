@@ -136,6 +136,64 @@ namespace NutriFoodAPI.Service
                     Exception($"Erro ao buscar o ID {id} no Firestore: {ex.Message}");
             }
         }
+
+        /// <summary>
+        /// Busca alimentos validados no Firestore cujo nome seja igual ou contenha 
+        /// o termo pesquisado (Case-Insensitive aproximado).
+        /// </summary>
+        public async Task<List<AlimentoValidado>> ObterAlimentosPorNome(string nome)
+        {
+            try
+            {
+                // Acessa a coleção no Firestore
+                CollectionReference colecao = _contexto.Database.Collection("AlimentosValidados");
+
+                // Faz uma busca exata pelo nome cadastrado no banco e traz os resultados idênticos               
+                Query consulta = colecao.WhereEqualTo("Nome", nome);
+                QuerySnapshot snapshot = await
+                    consulta.GetSnapshotAsync();
+
+                List<AlimentoValidado> listaAlimentos = new List<AlimentoValidado>();
+
+                foreach (DocumentSnapshot documento in snapshot.Documents)
+                {
+                    if (documento.Exists)
+                    {
+                        // Converte o documento do Firestore para a nossa model
+                        var alimento = documento.ConvertTo<AlimentoValidado>();
+                        listaAlimentos.Add(alimento);
+                    }
+                }
+
+                // Se não achar por busca exata, podemos fazer uma busca por filtro: "Começa com"
+                // Isso ajuda caso o usuário digite "Arroz" e queira achar "Arroz Integral" ou "Arroz Branco"
+                if (listaAlimentos.Count == 0)
+                {
+                    // O '\uf8ff' faz o Firestore entender que queremos tudo que começa com aquele texto
+                    Query consultaAproximada = colecao
+                        .WhereGreaterThanOrEqualTo("Nome", nome)
+                        .WhereLessThanOrEqualTo("Nome", nome + "\uf8ff");
+
+                    QuerySnapshot snapshotAproximado = await consultaAproximada.GetSnapshotAsync();
+
+                    foreach (DocumentSnapshot documento in snapshotAproximado.Documents)
+                    {
+                        if (documento.Exists)
+                        {
+                            var alimento = documento.ConvertTo<AlimentoValidado>();
+                            listaAlimentos.Add(alimento);
+                        }
+                    }
+                }
+
+                return listaAlimentos;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Erro ao buscar alimento por nome no Firestore: {ex.Message}");
+            }
+        }
+
         private async Task<int> GerarProximoIdSequencial()
         {
             DocumentReference contadorRef = _contexto.Database
