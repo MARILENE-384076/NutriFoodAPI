@@ -113,5 +113,33 @@ namespace NutriFoodAPI.Controllers
                 });
             }
         }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetById(string id)
+        {
+            try
+            {                
+                var alimento = await _firestoreService.ObterPorId(id);
+
+                ///Se o objeto específico não existe no banco, retorna 404
+                if (alimento == null)
+                {
+                    return NotFound(new
+                    {
+                        mensagem = $"Alimento com o ID '{id}' não foi encontrado no sistema."
+                    });
+                }
+                
+                return Ok(alimento);
+            }
+            catch (Exception)
+            {                
+                return StatusCode(500, new
+                {
+                    mensagem = "Ocorreu um erro interno ao processar a busca do alimento. " +
+                    "Por favor, tente novamente mais tarde."
+                });
+            }
+        }
     }
 }
