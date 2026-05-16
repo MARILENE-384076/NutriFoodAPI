@@ -18,27 +18,26 @@ namespace NutriFoodAPI.Service
         private readonly HttpClient _http;
         private readonly string _chaveApi;
 
-        /// <summary>
-        /// Construtor corrigido para mapear a estrutura exata do seu appsettings.json
-        /// </summary>
         public FirestoreService(FirestoreContext contexto, HttpClient http, IConfiguration configuration)
         {
             _contexto = contexto;
             _http = http;
 
-            // Buscando a chave dentro do bloco "ApiConfigs" -> "NinjaApiKey"
             _chaveApi = configuration["ApiConfigs:NinjaApiKey"] ?? throw new
                 Exception("Chave 'NinjaApiKey' não encontrada no bloco 'ApiConfigs' do appsettings.json.");
 
             _http.DefaultRequestHeaders.Add("X-Api-Key", _chaveApi);
         }
 
-        public async Task<AlimentoValidado?> SalvarAlimentoValidado(AlimentoValidado alimento)
+        /// <summary>
+        /// Recebe os dados externos, consulta a API oficial, mescla as informações e salva.
+        /// </summary>
+        public async Task<AlimentoValidado?> SalvarAlimentoValidado(AlimentoConsultaExterna alimentoExterno)
         {
             try
             {
                 // Consulta à API externa para obter os dados oficiais do alimento
-                var dadosOficiais = await ConsultarApiNutricional(alimento.Nome);
+                var dadosOficiais = await ConsultarApiNutricional(alimentoExterno.Name);
 
                 if (dadosOficiais == null)
                     return null;
@@ -46,21 +45,24 @@ namespace NutriFoodAPI.Service
                 // Transação para obter o ID Sequencial do Firestore
                 int novoId = await GerarProximoIdSequencial();
 
-                // Convertendo os JsonElements em double
-                alimento.Id = novoId.ToString();
-                alimento.Nome = dadosOficiais.Name; // Mapeia string
-                alimento.Calorias = ConverterSeguro(dadosOficiais.Calories);
-                alimento.PorcaoGramas = ConverterSeguro(dadosOficiais.ServingSizeG);
-                alimento.GorduraTotal = ConverterSeguro(dadosOficiais.FatTotalG);
-                alimento.GorduraSaturada = ConverterSeguro(dadosOficiais.FatSaturatedG);
-                alimento.Proteina = ConverterSeguro(dadosOficiais.ProteinG);
-                alimento.Sodio = ConverterSeguro(dadosOficiais.SodiumMg);
-                alimento.Potassio = ConverterSeguro(dadosOficiais.PotassiumMg);
-                alimento.Colesterol = ConverterSeguro(dadosOficiais.CholesterolMg);
-                alimento.Carboidratos = ConverterSeguro(dadosOficiais.CarbohydratesTotalG);
-                alimento.Fibras = ConverterSeguro(dadosOficiais.FiberG);
-                alimento.Acucar = ConverterSeguro(dadosOficiais.SugarG);
-                alimento.DataValidacao = DateTime.UtcNow;
+                // Cria o objeto final convertendo os JsonElements de forma segura em um só lugar
+                var alimento = new AlimentoValidado
+                {
+                    Id = novoId.ToString(),
+                    Nome = dadosOficiais.Name, 
+                    Calorias = ConverterSeguro(dadosOficiais.Calories),
+                    PorcaoGramas = ConverterSeguro(dadosOficiais.ServingSizeG),
+                    GorduraTotal = ConverterSeguro(dadosOficiais.FatTotalG),
+                    GorduraSaturada = ConverterSeguro(dadosOficiais.FatSaturatedG),
+                    Proteina = ConverterSeguro(dadosOficiais.ProteinG),
+                    Sodio = ConverterSeguro(dadosOficiais.SodiumMg),
+                    Potassio = ConverterSeguro(dadosOficiais.PotassiumMg),
+                    Colesterol = ConverterSeguro(dadosOficiais.CholesterolMg),
+                    Carboidratos = ConverterSeguro(dadosOficiais.CarbohydratesTotalG),
+                    Fibras = ConverterSeguro(dadosOficiais.FiberG),
+                    Acucar = ConverterSeguro(dadosOficiais.SugarG),
+                    DataValidacao = DateTime.UtcNow
+                };
 
                 await SalvarNoFirestore(alimento);
 
@@ -85,19 +87,15 @@ namespace NutriFoodAPI.Service
                 int idAtual = snapshot.Exists && snapshot.TryGetValue("ultimoId", out int id) ? id : 0;
                 int proximoId = idAtual + 1;
 
-                transaction.Set(contadorRef, new 
-                { ultimoId = proximoId }, SetOptions.MergeAll);
+                transaction.Set(contadorRef, new { ultimoId = proximoId }, SetOptions.MergeAll);
 
                 return proximoId;
             });
         }
 
-        /// <summary>
-        /// Altera o retorno para 'AlimentoConsultaExterna' para aceitar os tipos dinâmicos da API externa
-        /// </summary>
         private async Task<AlimentoConsultaExterna?> ConsultarApiNutricional(string nome)
         {
-            var response = await
+            var response = await 
                 _http.GetAsync($"https://api.api-ninjas.com/v1/nutrition?query={Uri.EscapeDataString(nome)}");
 
             if (!response.IsSuccessStatusCode)
@@ -111,8 +109,6 @@ namespace NutriFoodAPI.Service
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
             };
 
-            /// A API retorna uma lista, mas como estamos consultando por um alimento específico,
-            /// pegamos o primeiro resultado (ou null se a lista estiver vazia)
             var lista = JsonSerializer.Deserialize<List<AlimentoConsultaExterna>>(json, options);
 
             return lista?.FirstOrDefault();
@@ -127,7 +123,7 @@ namespace NutriFoodAPI.Service
         }
 
         /// <summary>
-        /// Tratamento humano para converter com total segurança JsonElement em double
+        /// Método auxiliar para converter JsonElement de forma segura, tratando casos de string e número.
         /// </summary>
         private double ConverterSeguro(JsonElement elemento)
         {
@@ -137,7 +133,7 @@ namespace NutriFoodAPI.Service
             if (elemento.ValueKind == JsonValueKind.String && double.TryParse(elemento.GetString(), out double resultado))
                 return resultado;
 
-            return 0; // Se nulo ou formato inadequado.
+            return 0; 
         }
     }
 }
