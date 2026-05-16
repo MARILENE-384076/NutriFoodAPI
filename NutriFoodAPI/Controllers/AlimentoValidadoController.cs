@@ -62,10 +62,13 @@ namespace NutriFoodAPI.Controllers
                 return StatusCode(502, 
                     "O serviço de validação nutricional externo está temporariamente indisponível.");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                return StatusCode(500, 
-                    $"Erro interno no servidor: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    mensagem = "Ocorreu um erro interno ao processar e salvar o alimento. " +
+                    "Por favor, tente novamente mais tarde."
+                });
             }
         }
         /// <summary>
