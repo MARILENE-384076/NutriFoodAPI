@@ -113,8 +113,21 @@ namespace NutriFoodAPI.Controllers
                 });
             }
         }
-
+        /// <summary>
+        /// Obtém um alimento validado específico através do seu ID sequencial.
+        /// </summary>
+        /// <remarks>
+        /// Realiza uma busca direta no Firestore utilizando o ID fornecido na URL.
+        /// </remarks>
+        /// <param name="id">ID sequencial do alimento armazenado no banco de dados.</param>
+        /// <response code="200">Alimento encontrado com sucesso.</response>
+        /// <response code="404">Nenhum alimento foi encontrado com o ID informado.</response>
+        /// <response code="500">Erro interno no servidor ao tentar acessar o banco de dados.</response>
         [HttpGet("{id}")]
+        [ProducesResponseType(typeof(AlimentoValidado), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AlimentoValidado), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetById(string id)
         {
             try
