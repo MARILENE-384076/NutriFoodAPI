@@ -68,25 +68,25 @@ namespace NutriFoodAPI.Controllers
                     $"Erro interno no servidor: {ex.Message}");
             }
         }
-
         /// <summary>
-        /// Obtém a lista completa de todos os alimentos validados.
+        ///  Obtém a lista completa de todos os alimentos validados.
         /// </summary>
-        [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        /// <returns></returns>
         public async Task<IActionResult> GetAll()
         {
             try
             {
                 var alimentos = await _firestoreService.ObterTodos();
-
-                // Retorna a lista, mesmo se estiver vazia, para manter a consistência da API
+                
                 return Ok(alimentos);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, $"Erro interno no servidor: {ex.Message}");
+            catch (Exception)
+            {                
+                return StatusCode(500, new
+                {
+                    mensagem = "Ocorreu um erro interno ao processar a listagem dos alimentos. " +
+                    "Por favor, tente novamente mais tarde."
+                });
             }
         }
     }
