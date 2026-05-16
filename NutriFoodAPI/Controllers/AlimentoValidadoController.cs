@@ -75,6 +75,7 @@ namespace NutriFoodAPI.Controllers
         ///  Obtém a lista completa de todos os alimentos validados.
         /// </summary>
         /// <returns></returns>
+        [HttpGet]
         public async Task<IActionResult> GetAll()
         {
             try
