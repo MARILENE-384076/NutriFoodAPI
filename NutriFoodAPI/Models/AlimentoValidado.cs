@@ -15,7 +15,6 @@ namespace NutriFoodAPI.Models
         [JsonPropertyName("name")]
         public string Nome { get; set; } = string.Empty;
 
-        // ALTERADO: De decimal para double para casar perfeitamente com o JSON da API Ninjas e com o Firestore
         [FirestoreProperty]
         [JsonPropertyName("calories")]
         public double Calorias { get; set; }
@@ -61,6 +60,6 @@ namespace NutriFoodAPI.Models
         public double Acucar { get; set; }
 
         [FirestoreProperty]
-        public DateTime DataValidacao { get; set; }
+        public DateTime DataValidacao { get; set; } = DateTime.UtcNow;
     }
 }
