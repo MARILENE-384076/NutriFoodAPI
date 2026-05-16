@@ -190,14 +190,16 @@ namespace NutriFoodAPI.Controllers
                 if (alimentos == null || alimentos.Count == 0)
                 {
                     return NotFound(new
-                    { mensagem = $"Nenhum alimento contendo '{termoBusca}' " +
-                    $"foi encontrado no histórico do banco." });
+                    {
+                        mensagem = $"Nenhum alimento contendo '{termoBusca}' " +
+                    $"foi encontrado no histórico do banco."
+                    });
                 }
 
                 return Ok(alimentos);
             }
             catch (Exception)
-            {                
+            {
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar a busca do alimento pelo nome. " +
@@ -206,5 +208,44 @@ namespace NutriFoodAPI.Controllers
             }
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(string id)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    return BadRequest("O ID fornecido é inválido ou vazio.");
+                }
+
+                // Delega a exclusão para o Service
+                bool excluidoComSucesso = await _firestoreService.ExcluirAlimento(id);
+
+                // Se o Service retornar falso, significa que o ID não existe no banco
+                if (!excluidoComSucesso)
+                {
+                    return NotFound(new
+                    {
+                        mensagem = $"Não foi possível excluir." +
+                    $" Alimento com ID '{id}' não foi localizado no sistema."
+                    });
+                }
+
+                // Retorna sucesso, confirmando a remoção
+                return Ok(new
+                {
+                    mensagem = $"Alimento com ID '{id}' foi removido " +
+                    $"com sucesso do banco de dados!"
+                });
+            }
+            catch (Exception)
+            {                
+                return StatusCode(500, new
+                {
+                    mensagem = "Ocorreu um erro interno ao tentar excluir o alimento. " +
+                    "Por favor, tente novamente mais tarde."
+                });
+            }
+        }
     }
 }
