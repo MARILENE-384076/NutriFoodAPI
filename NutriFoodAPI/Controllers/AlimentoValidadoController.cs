@@ -72,10 +72,18 @@ namespace NutriFoodAPI.Controllers
             }
         }
         /// <summary>
-        ///  Obtém a lista completa de todos os alimentos validados.
+        /// Obtém a lista completa de todos os alimentos validados.
         /// </summary>
-        /// <returns></returns>
+        /// <remarks>
+        /// Este endpoint realiza uma busca segura no Firestore. Se não houver registros, 
+        /// retorna uma lista vazia.
+        /// </remarks>
+        /// <response code="200">Retorna a lista de alimentos validados com sucesso
+        /// podendo ser um array vazio [].</response>
+        /// <response code="500">Erro interno no servidor ao tentar acessar o banco de dados.</response>
         [HttpGet]
+        [ProducesResponseType(typeof(List<AlimentoValidado>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
         {
             try
