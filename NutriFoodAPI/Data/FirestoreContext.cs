@@ -1,7 +1,9 @@
-﻿using Google.Cloud.Firestore;
+﻿using Google.Apis.Auth.OAuth2; // Adicionado para usar o GoogleCredential
+using Google.Cloud.Firestore;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
+using Google.Apis.Auth.OAuth2;
 
 namespace NutriFoodAPI.Data
 {
@@ -17,7 +19,9 @@ namespace NutriFoodAPI.Data
             try
             {
                 /// Busca os dados do appsettings.json                 
-                string idProjeto = configuration["FirebaseConfig:ProjectId"];
+                string idProjeto = configuration["FirebaseConfig:ProjectId"]
+                    ?? throw new Exception("A chave 'ProjectId' não foi encontrada no appsettings.json.");
+
                 string nomeArquivo = configuration["FirebaseConfig:JsonPath"];
 
                 /// Monta o caminho considerando a pasta 'config_API'
@@ -27,29 +31,26 @@ namespace NutriFoodAPI.Data
                 /// Validações para garantir que as configurações estão corretas
                 if (string.IsNullOrEmpty(nomeArquivo))
                 {
-                    throw new 
-                        Exception("A chave 'JsonPath' não foi encontrada no appsettings.json.");
+                    throw new Exception("A chave 'JsonPath' não foi encontrada no appsettings.json.");
                 }
 
                 if (!File.Exists(caminhoCompleto))
                 {
                     throw new 
-                        FileNotFoundException($"Arquivo de credenciais não encontrado no caminho: " +
-                        $"{caminhoCompleto}");
+                        FileNotFoundException($"Arquivo de credenciais do Firebase não encontrado: {caminhoCompleto}");
                 }
 
-                /// Define a variável de ambiente para o SDK do Google Cloud, apontando para o arquivo JSON
-                Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", caminhoCompleto);
+                var credential = GoogleCredential.FromFile(caminhoCompleto);
 
-                /// Inicializa a conexão com o Firestore usando o ID do projeto
-                Database = FirestoreDb.Create(idProjeto);
-            }
-            
+                Database = new FirestoreDbBuilder
+                {
+                    ProjectId = idProjeto,
+                    Credential = credential
+                }.Build();
+              }
             catch (Exception ex)
             {
-                
-                throw new 
-                    Exception($"Erro Crítico ao inicializar FirestoreContext: {ex.Message}");
+                throw new Exception($"Erro Crítico ao inicializar FirestoreContext: {ex.Message}");
             }
         }
     }

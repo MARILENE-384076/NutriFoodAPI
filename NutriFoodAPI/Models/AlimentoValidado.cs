@@ -15,49 +15,50 @@ namespace NutriFoodAPI.Models
         [JsonPropertyName("name")]
         public string Nome { get; set; } = string.Empty;
 
+        // ALTERADO: De decimal para double para casar perfeitamente com o JSON da API Ninjas e com o Firestore
         [FirestoreProperty]
         [JsonPropertyName("calories")]
-        public decimal Calorias { get; set; }
+        public double Calorias { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("serving_size_g")]
-        public decimal PorcaoGramas { get; set; }
+        public double PorcaoGramas { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("fat_total_g")]
-        public decimal GorduraTotal { get; set; }
+        public double GorduraTotal { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("fat_saturated_g")]
-        public decimal GorduraSaturada { get; set; }
+        public double GorduraSaturada { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("protein_g")]
-        public decimal Proteina { get; set; }
+        public double Proteina { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("sodium_mg")]
-        public decimal Sodio { get; set; }
+        public double Sodio { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("potassium_mg")]
-        public decimal Potassio { get; set; }
+        public double Potassio { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("cholesterol_mg")]
-        public decimal Colesterol { get; set; }
+        public double Colesterol { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("carbohydrates_total_g")]
-        public decimal Carboidratos { get; set; }
+        public double Carboidratos { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("fiber_g")]
-        public decimal Fibras { get; set; }
+        public double Fibras { get; set; }
 
         [FirestoreProperty]
         [JsonPropertyName("sugar_g")]
-        public decimal Acucar { get; set; }
+        public double Acucar { get; set; }
 
         [FirestoreProperty]
         public DateTime DataValidacao { get; set; }

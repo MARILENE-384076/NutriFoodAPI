@@ -4,6 +4,11 @@ using NutriFoodAPI.Models;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Net.Http;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace NutriFoodAPI.Service
 {
@@ -13,36 +18,34 @@ namespace NutriFoodAPI.Service
         private readonly HttpClient _http;
         private readonly string _chaveApi;
 
-        public FirestoreService(FirestoreContext contexto, HttpClient http)
+        /// <summary>
+        /// Construtor corrigido para mapear a estrutura exata do seu appsettings.json
+        /// </summary>
+        public FirestoreService(FirestoreContext contexto, HttpClient http, IConfiguration configuration)
         {
             _contexto = contexto;
             _http = http;
 
-            // Configuração para ler a chave direto da pasta config_API
-            var config = new ConfigurationBuilder()
-                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
-                .AddJsonFile("config_API/ninja-api-Key.json")
-                .Build();
+            // CORREÇÃO: Buscando a chave dentro do bloco "ApiConfigs" -> "NinjaApiKey"
+            _chaveApi = configuration["ApiConfigs:NinjaApiKey"] ?? throw new
+                Exception("Chave 'NinjaApiKey' não encontrada no bloco 'ApiConfigs' do appsettings.json.");
 
-            _chaveApi = config["ApiKey"] ?? throw new Exception("Chave da API Ninjas não encontrada no arquivo config_API/ninja-api-Key.json");
+            _http.DefaultRequestHeaders.Add("X-Api-Key", _chaveApi);
         }
 
         public async Task<AlimentoValidado?> SalvarAlimentoValidado(AlimentoValidado alimento)
         {
             try
             {
-                // 1. Validação Externa (API Ninjas)
-                // DICA: No Swagger, envie o nome em INGLÊS (ex: "rice") para obter resultados
                 var dadosOficiais = await ConsultarApiNutricional(alimento.Nome);
 
-                if (dadosOficiais == null) return null;
+                if (dadosOficiais == null)
+                    return null;
 
-                // 2. Gerar ID Sequencial (Lógica de transação no Firestore)
                 int novoId = await GerarProximoIdSequencial();
 
-                // 3. Enriquecimento/Mapeamento dos dados
                 alimento.Id = novoId.ToString();
-                alimento.Nome = dadosOficiais.Nome; // Garante o nome correto retornado pela API
+                alimento.Nome = dadosOficiais.Nome;
                 alimento.Calorias = dadosOficiais.Calorias;
                 alimento.GorduraTotal = dadosOficiais.GorduraTotal;
                 alimento.Proteina = dadosOficiais.Proteina;
@@ -52,14 +55,12 @@ namespace NutriFoodAPI.Service
                 alimento.PorcaoGramas = dadosOficiais.PorcaoGramas;
                 alimento.DataValidacao = DateTime.UtcNow;
 
-                // 4. Persistência
                 await SalvarNoFirestore(alimento);
 
                 return alimento;
             }
             catch (Exception ex)
             {
-                // Captura erros de rede ou de permissão do banco
                 throw new Exception($"Erro NutriFoodAPI: {ex.Message}");
             }
         }
@@ -85,30 +86,20 @@ namespace NutriFoodAPI.Service
 
         private async Task<AlimentoValidado?> ConsultarApiNutricional(string nome)
         {
-            /// Configurações de cabeçalho para autenticação na API Ninjas
-            _http.DefaultRequestHeaders.Clear();
-            _http.DefaultRequestHeaders.Add("X-Api-Key", _chaveApi);
+            var response = await
+                _http.GetAsync($"https://api.api-ninjas.com/v1/nutrition?query={Uri.EscapeDataString(nome)}");
 
-            /// Consulta à API Ninjas usando o nome do alimento
-            var response = await 
-                _http.GetAsync($"https://api.api-ninjas.com/v1/nutrition?query={nome}");
-
-            if (!response.IsSuccessStatusCode) 
+            if (!response.IsSuccessStatusCode)
                 return null;
 
-            /// A API Ninjas retorna uma lista, mesmo que haja apenas um resultado.
-            /// Por isso, deserializamos para uma lista e pegamos o primeiro item.
             var json = await response.Content.ReadAsStringAsync();
 
-            /// Configurações para deserialização           
             var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
-                /// Permite ler números mesmo que estejam em formato string 
                 NumberHandling = JsonNumberHandling.AllowReadingFromString
             };
 
-            /// A API Ninjas retorna uma lista de alimentos.
             var lista = JsonSerializer.Deserialize<List<AlimentoValidado>>(json, options);
 
             return lista?.FirstOrDefault();
