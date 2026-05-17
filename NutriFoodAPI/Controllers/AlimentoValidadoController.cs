@@ -310,9 +310,9 @@ namespace NutriFoodAPI.Controllers
                     dados = alimentoAtualizado
                 });
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                _logger.LogError(ex, "Erro crítico no endpoint PUT ao tentar atualizar" +
+                _logger.LogError("Erro crítico no endpoint PUT ao tentar atualizar" +
                     " o ID: {IdAlimento}", id);
                 return StatusCode(500, new
                 {
