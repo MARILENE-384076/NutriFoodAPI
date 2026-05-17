@@ -87,7 +87,7 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 ### 2. Obter Todos os Alimentos Validados
 
 * **Método:** `GET`
-* **Rota:** `/api/AlimentoValidado`
+* **Rota:** `https://apinutrifood.runasp.net/api/AlimentoValidado`
 * **Descrição:** Retorna a listagem completa de todos os registos persistidos no histórico do Firestore.
 
 #### Códigos de Resposta
@@ -99,8 +99,8 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 
 ### 3. Obter Alimento por ID Sequencial
 
-* **Método:** `GET`
-* **Rota:** `/api/AlimentoValidado/{id}`
+* **Método:** `GETBYID`
+* **Rota:** `https://apinutrifood.runasp.net/api/AlimentoValidado/{id}`
 * **Descrição:** Efetua uma busca direta utilizando o Identificador Sequencial guardado.
 
 #### Códigos de Resposta
@@ -113,7 +113,7 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 ### 4. Filtrar Alimentos por Nome
 
 * **Método:** `GET`
-* **Rota:** `/api/AlimentoValidado/buscar-por-nome/{nome}`
+* **Rota:** `https://apinutrifood.runasp.net/api/AlimentoValidado/buscar-por-nome/{nome}`
 * **Descrição:** Realiza uma pesquisa baseada em termos/palavras-chave na base de dados (remove espaços em branco automaticamente através do método `.Trim()`).
 
 #### Códigos de Resposta
@@ -127,7 +127,7 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 ### 5. Atualizar Alimento Existente
 
 * **Método:** `PUT`
-* **Rota:** `/api/AlimentoValidado/{id}`
+* **Rota:** `https://apinutrifood.runasp.net/api/AlimentoValidado/{id}`
 * **Descrição:** Substitui na íntegra as informações do documento associado ao ID indicado na URL.
 
 #### Códigos de Resposta
@@ -141,9 +141,9 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 ### 6. Remover Alimento do Sistema
 
 * **Método:** `DELETE`
-* **Rota:** `api/AlimentoValidado/{id}`
+* **Rota:** `https://apinutrifood.runasp.net/api/AlimentoValidado/{id}`
 * **Descrição:** Elimina em definitivo o documento correspondente ao ID sequencial informado.
-
+  
 #### Códigos de Resposta
 
 | Status Code | Significado | Descrição / Cenário |
@@ -152,9 +152,22 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 | **400** | Bad Request | ID inválido ou nulo. |
 | **404** | Not Found | Identificador não encontrado para exclusão. |
 
+---
 ## 🛡️ Rastreabilidade e Resiliência (Logs)
 
 A controladora possui tratamento completo de exceções estruturado (`try-catch`), interagindo diretamente com a interface `ILogger`. Isto garante que:
 
 * **Detecção de Anomalias:** Tentativas de fraude ou envio de dados malformados geram alertas de aviso (`LogWarning`).
 * **Blindagem de Erros:** Falhas de rede externas e indisponibilidade de serviços terceiros geram logs de erro específicos (`LogError`), impedindo que o utilizador visualize mensagens nativas do sistema (*stack traces* confusas).
+
+  ## 📝 Swagger UI: Documentação Interativa
+
+O projeto expõe nativamente a documentação através do padrão OpenAPI utilizando a ferramenta Swagger UI. Com a aplicação em execução, pode aceder à página interativa através do endereço:
+
+👉 **Swagger UI:** [(http://apinutrifood.runasp.net/swagger/index.html) *(ou  conforme a porta configurada)*
+
+### Vantagens de utilizar o Swagger UI no projeto:
+
+* **⚡ Testes em Tempo Real (Interactive Playground):** Permite realizar chamadas diretamente nos endpoints HTTP (`POST`, `GET`, `PUT`, `DELETE`) sem a necessidade de instalar ferramentas externas como o Postman ou Insomnia.
+* **📜 Garantia de Contrato Único:** Os códigos de estado documentados (201, 400, 404, 502, 500) e os tipos de dados aceites são exibidos visualmente de forma clara para as outras equipas (Squads).
+* **🔄 Documentação Viva:** Qualquer alteração efetuada nos comentários XML da `AlimentoValidadoController` reflete-se automaticamente na interface visual na próxima compilação, prevenindo documentações desatualizadas em ficheiros externos de texto.
