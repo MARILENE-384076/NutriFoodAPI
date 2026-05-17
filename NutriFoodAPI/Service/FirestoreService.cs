@@ -226,7 +226,7 @@ namespace NutriFoodAPI.Service
                     Exception($"Erro ao excluir alimento no Firestore: {ex.Message}");
             }
         }
-
+       
         private async Task<int> GerarProximoIdSequencial()
         {
             DocumentReference contadorRef = _contexto.Database
@@ -245,7 +245,11 @@ namespace NutriFoodAPI.Service
                 return proximoId;
             });
         }
-
+        /// <summary>
+        /// Consulta a API nutricional externa para obter informações sobre um alimento específico.
+        /// </summary>
+        /// <param name="nome"></param>
+        /// <returns></returns>
         private async Task<AlimentoConsultaExterna?> ConsultarApiNutricional(string nome)
         {
             var response = await 

@@ -31,31 +31,40 @@ builder.Services.AddSwaggerGen(options =>
 
     var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    
+
     if (File.Exists(xmlPath))
     {
         options.IncludeXmlComments(xmlPath);
     }
 });
 
-/// Registro do Firestore como Singleton para garantir uma única instância durante toda a aplicação
+// Registro do Firestore como Singleton para garantir uma única instância durante toda a aplicação
 builder.Services.AddSingleton<FirestoreContext>();
-
-
 builder.Services.AddHttpClient();
-builder.Services.AddHttpClient<FirestoreService>(); 
+builder.Services.AddHttpClient<FirestoreService>();
 
 var app = builder.Build();
 
+// CORREÇÃO 1: Swagger configurado com o prefixo padrão (/swagger) para evitar conflitos no IIS
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
-    options.RoutePrefix = string.Empty;
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "API Validação Nutricional de alimentos v1");
 });
 
+// CORREÇÃO 2: Redirecionamento amigável. Se entrares na raiz do site, ele manda-te para o Swagger
+app.MapGet("/", context =>
+{
+    context.Response.Redirect("/swagger");
+    return Task.CompletedTask;
+});
+
 app.UseCors("PermitirTudo");
-app.UseHttpsRedirection();
+
+// CORREÇÃO 3: Comentado temporariamente. O proxy reverso do MonsterASP gerencia o HTTPS. 
+// Deixar esta linha ativa em servidores gratuitos costuma derrubar a conexão (Connection Reset).
+// app.UseHttpsRedirection(); 
+
 app.UseAuthorization();
 app.MapControllers();
 

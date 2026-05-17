@@ -136,7 +136,6 @@ namespace NutriFoodAPI.Controllers
             catch (Exception)
             {
                 _logger.LogError("Erro crítico no endpoint GET ao listar todos os alimentos.");
-
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar a listagem dos alimentos. " +
@@ -145,7 +144,7 @@ namespace NutriFoodAPI.Controllers
             }
         }
         /// <summary>
-        /// Obtém um alimento validado específico através do seu ID sequencial.
+        /// Obtém um alimento validado específico através do seu ID Sequencial.
         /// </summary>
         /// <remarks>
         /// Realiza uma busca direta no Firestore utilizando o ID fornecido na URL.
@@ -153,7 +152,7 @@ namespace NutriFoodAPI.Controllers
         /// <param name="id">ID sequencial do alimento armazenado no banco de dados.</param>
         /// <response code="200">Alimento encontrado com sucesso.</response>
         /// <response code="404">Nenhum alimento foi encontrado com o ID informado.</response>
-        /// <response code="500">Erro interno no servidor ao tentar acessar o banco de dados.</response>
+        /// <response code="500">Erro interno no servidor ao tentar acessar o banco de dados.</response
         [HttpGet("{id}")]
         [ProducesResponseType(typeof(AlimentoValidado), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(AlimentoValidado), StatusCodes.Status200OK)]
@@ -163,21 +162,26 @@ namespace NutriFoodAPI.Controllers
         {
             try
             {
+                _logger.LogInformation("Buscando alimento específico pelo ID: {IdAlimento}", id);
                 var alimento = await _firestoreService.ObterPorId(id);
 
                 ///Se o objeto específico não existe no banco, retorna 404
+                
                 if (alimento == null)
                 {
+                    _logger.LogWarning("Alimento com ID '{IdAlimento}' não foi localizado no Firestore.", id);
                     return NotFound(new
                     {
                         mensagem = $"Alimento com o ID '{id}' não foi encontrado no sistema."
                     });
                 }
 
+                _logger.LogInformation("Alimento com ID '{IdAlimento}' retornado com sucesso.", id);
                 return Ok(alimento);
             }
             catch (Exception)
             {
+                _logger.LogError("Erro crítico no endpoint GET por ID ao buscar o identificador: {IdAlimento}", id);
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar a busca do alimento. " +
@@ -205,12 +209,14 @@ namespace NutriFoodAPI.Controllers
             {
                 if (string.IsNullOrWhiteSpace(nome))
                 {
+                    _logger.LogWarning("Tentativa de busca por nome com parâmetro vazio.");
                     return
                        BadRequest("O nome para busca não pode estar vazio.");
                 }
 
                 // Remove espaços extras nas pontas para evitar erros de digitação
                 var termoBusca = nome.Trim();
+                _logger.LogInformation("Iniciando busca de alimentos contendo o termo: '{Termo}'", termoBusca);
 
                 var alimentos = await
                             _firestoreService.ObterAlimentosPorNome(termoBusca);
@@ -218,6 +224,7 @@ namespace NutriFoodAPI.Controllers
                 // Se a lista voltar vazia, retorna 404 informando que nada foi achado no banco
                 if (alimentos == null || alimentos.Count == 0)
                 {
+                    _logger.LogWarning("Nenhum registro correspondente ao termo '{Termo}' foi achado.", termoBusca);
                     return NotFound(new
                     {
                         mensagem = $"Nenhum alimento contendo '{termoBusca}' " +
@@ -225,10 +232,12 @@ namespace NutriFoodAPI.Controllers
                     });
                 }
 
+                _logger.LogInformation("Busca por nome finalizada com sucesso. Encontrados {Quantidade} registros.", alimentos.Count);
                 return Ok(alimentos);
             }
             catch (Exception)
             {
+                _logger.LogError("Erro crítico no endpoint GET por Nome ao buscar o termo: '{Termo}'", nome);
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao processar a busca do alimento pelo nome. " +
@@ -260,12 +269,14 @@ namespace NutriFoodAPI.Controllers
                     return BadRequest("O ID fornecido é inválido ou vazio.");
                 }
 
+                _logger.LogInformation("Iniciando processo de remoção do alimento ID: {IdAlimento}", id);
                 // Delega a exclusão para o Service
                 bool excluidoComSucesso = await _firestoreService.ExcluirAlimento(id);
 
                 // Se o Service retornar falso, significa que o ID não existe no banco
                 if (!excluidoComSucesso)
                 {
+                    _logger.LogWarning("Falha ao excluir. Alimento ID '{IdAlimento}' não existe na base.", id);
                     return NotFound(new
                     {
                         mensagem = $"Não foi possível excluir." +
@@ -273,6 +284,7 @@ namespace NutriFoodAPI.Controllers
                     });
                 }
 
+                _logger.LogInformation("Alimento ID '{IdAlimento}' removido com sucesso do Firestore.", id);
                 // Retorna sucesso, confirmando a remoção
                 return Ok(new
                 {
@@ -281,7 +293,8 @@ namespace NutriFoodAPI.Controllers
                 });
             }
             catch (Exception)
-            {                
+            {
+                _logger.LogError("Erro crítico no endpoint DELETE ao tentar apagar o ID: {IdAlimento}", id);
                 return StatusCode(500, new
                 {
                     mensagem = "Ocorreu um erro interno ao tentar excluir o alimento. " +
