@@ -1,12 +1,64 @@
-# NutriFoodAPI — Módulo de Validação Nutricional
+# APINutriFood — Web API de Validação Nutricional
 ---
+
+Esta Web API foi desenvolvida em **ASP.NET Core** com o objetivo de centralizar a ingestão, validação de regras de negócio e a persistência de dados nutricionais coletados de APIs externas. O microsserviço atua de forma integrada com outras frentes de desenvolvimento (Squads), assegurando a qualidade e a rastreabilidade das informações antes de consolidadas no banco de dados Cloud Firestore.
+
 <div align="center">
   <img src="Imagens/Tela_API.png" alt="Interface do Swagger da NutriFoodAPI" width="75%">
 </div>
 
 ---
+## 🚀 Tecnologias Utilizadas
 
-Esta Web API foi desenvolvida em **ASP.NET Core** com o objetivo de centralizar a ingestão, validação de regras de negócio e a persistência de dados nutricionais coletados de APIs externas. O microsserviço atua de forma integrada com outras frentes de desenvolvimento (Squads), assegurando a qualidade e a rastreabilidade das informações antes de consolidadas no banco de dados Cloud Firestore.
+* **Runtime:** .NET Core (ASP.NET Core Web API)
+* **Banco de Dados:** Google Cloud Firestore (NoSQL Cloud Database)
+* **Documentação:** Swagger (OpenAPI)
+* **Hospedagem/Cloud:** MonsterASP.net
+
+---
+
+## 🏗️ Arquitetura e Fluxo de Dados (Models)
+
+Para garantir a segurança e o isolamento das regras de negócio, a API utiliza uma estrutura baseada em duas camadas de modelos:
+
+1.  **`AlimentoConsultaExterna`**: Atua como um DTO (Data Transfer Object) e camada de proteção. É responsável por mapear e receber os dados brutos vindos de requisições externas ou outras integrações antes da validação.
+2.  **`AlimentoValidado`**: É a entidade de persistência mapeada com as anotações do Firestore. Ela representa o dado consolidado, limpo e devidamente validado de acordo com as regras de negócio prontas para o banco de dados.
+
+---
+
+## 🔌 Integração entre Squads (Endpoints)
+
+A API centraliza a comunicação do ecossistema atuando como ponto focal para diferentes frentes de trabalho:
+
+### 📥 Ingestão de Dados (Squad 1)
+* **Endpoint:** `POST /AlimentoValidado`
+* **Protocolo:** HTTP
+* **Descrição:** Recebe as requisições contendo os novos dados nutricionais. A API processa o payload, aplica as regras de validação e, em caso de sucesso, utiliza o `FirestoreService` para persistir as informações de forma segura através de transações atômicas.
+
+### 📤 Consumo de Informações (Squad 3)
+* **Endpoint:** `GET /AlimentoConsultaExterna`
+* **Protocolo:** HTTP
+* **Descrição:** Disponibiliza o acesso estruturado aos dados em formato JSON para que outras aplicações consumam as informações nutricionais já processadas pelo microsserviço.
+  
+---
+
+## ☁️ Infraestrutura e Persistência em Nuvem
+
+O ecossistema da **NutriFoodAPI** foi projetado seguindo o modelo de microsserviços modernos, utilizando ambientes em nuvem independentes e altamente escaláveis.
+
+### 1. Hospedagem da API (MonsterASP.net)
+A aplicação está publicada e rodando em ambiente de produção utilizando servidores Windows otimizados para o ecossistema `.NET`. O deploy foi efetuado via *WebDeploy* integrado ao Visual Studio, apontando para a raiz `\wwwroot`.
+
+### 2. Banco de Dados NoSQL (Google Cloud Firestore / Firebase)
+Para o armazenamento seguro e em tempo real dos alimentos validados, a API consome o **Cloud Firestore**. 
+* **Modelo NoSQL:** Os dados são estruturados na coleção `AlimentosValidados`.
+* **Segurança e Isolamento:** A conexão é autenticada através de chaves JSON privadas injetadas diretamente na API, garantindo que as squads parceiras interajam com o banco estritamente através dos contratos HTTP da aplicação.
+
+Na captura abaixo, é possível observar o registro `"arroz"` salvo com sucesso na coleção, contendo todos os dados nutricionais calculados pela API:
+
+<div align="center">
+  <img src="Imagens/Arroz.png" alt="Painel do Firebase Cloud Firestore" width="65%">
+</div>
 
 ---
 
