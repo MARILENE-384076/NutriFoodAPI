@@ -54,4 +54,107 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 > 💡 **Nota:** Certifique-se de usar o protocolo correto (`http` ou `https`) ao realizar as requisições para a API.
 
 ---
-   
+ ## 🌐 Documentação dos Endpoints (Contrato da API)
+
+**Classe Controladora:** `AlimentoValidadoController`  
+**Rota base:** `/api/AlimentoValidado`
+
+---
+
+### 1. Criar e Validar Alimento
+
+* **Método:** `POST`
+* **Rota:** `/api/AlimentoValidado`
+* **Descrição:** Recebe um alimento enviado pela Squad de origem, consulta a API Nutricional Externa (API-Ninjas), efetua a fusão com as regras internas e persiste no Firestore gerando um ID sequencial seguro.
+
+**Corpo da Requisição (JSON):**
+
+```json
+{
+  "name": "Banana"
+}
+```
+### 📋 Códigos de Resposta
+
+| Código | Status | Descrição |
+| :--- | :--- | :--- |
+| **201** | `Created` | Processado e guardado com sucesso. |
+| **400** | `Bad Request` | Dados inválidos ou nome do alimento vazio. |
+| **404** | `Not Found` | Alimento não encontrado na base nutricional externa. |
+| **502** | `Bad Gateway` | API externa indisponível ou fora do ar. |
+| **500** | `Internal Server Error` | Falha crítica de comunicação com o Firestore. |
+
+### 2. Obter Todos os Alimentos Validados
+
+* **Método:** `GET`
+* **Rota:** `/api/AlimentoValidado`
+* **Descrição:** Retorna a listagem completa de todos os registos persistidos no histórico do Firestore.
+
+#### Códigos de Resposta
+
+| Código | Status | Descrição |
+| :--- | :--- | :--- |
+| **200** | `OK` | Lista obtida com sucesso (retorna um array de objetos ou vazio `[]`). |
+| **500** | `Internal Server Error` | Erro no servidor ao aceder ao banco de dados. |
+
+### 3. Obter Alimento por ID Sequencial
+
+* **Método:** `GET`
+* **Rota:** `/api/AlimentoValidado/{id}`
+* **Descrição:** Efetua uma busca direta utilizando o Identificador Sequencial guardado.
+
+#### Códigos de Resposta
+
+| Código | Status | Descrição |
+| :--- | :--- | :--- |
+| **200** | `OK` | Registo localizado com sucesso. |
+| **404** | `Not Found` | ID informado não existe no sistema. |
+
+### 4. Filtrar Alimentos por Nome
+
+* **Método:** `GET`
+* **Rota:** `/api/AlimentoValidado/buscar-por-nome/{nome}`
+* **Descrição:** Realiza uma pesquisa baseada em termos/palavras-chave na base de dados (remove espaços em branco automaticamente através do método `.Trim()`).
+
+#### Códigos de Resposta
+
+| Código | Status | Descrição |
+| :--- | :--- | :--- |
+| **200** | `OK` | Retorna os registos que correspondem ao critério. |
+| **400** | `Bad Request` | Parâmetro de busca vazio. |
+| **404** | `Not Found` | Nenhuma correspondência localizada no histórico. |
+
+### 5. Atualizar Alimento Existente
+
+* **Método:** `PUT`
+* **Rota:** `/api/AlimentoValidado/{id}`
+* **Descrição:** Substitui na íntegra as informações do documento associado ao ID indicado na URL.
+
+#### Códigos de Resposta
+
+| Código | Status | Descrição |
+| :--- | :--- | :--- |
+| **200** | `OK` | Atualização consolidada. |
+| **400** | `Bad Request` | Divergência entre o ID fornecido na URL e o ID interno do corpo JSON. |
+| **404** | `Not Found` | Documento inexistente na base de dados. |
+
+### 6. Remover Alimento do Sistema
+
+* **Método:** `DELETE`
+* **Rota:** `api/AlimentoValidado/{id}`
+* **Descrição:** Elimina em definitivo o documento correspondente ao ID sequencial informado.
+
+#### Códigos de Resposta
+
+| Status Code | Significado | Descrição / Cenário |
+| :--- | :--- | :--- |
+| **200** | OK | Remoção concluída com sucesso. |
+| **400** | Bad Request | ID inválido ou nulo. |
+| **404** | Not Found | Identificador não encontrado para exclusão. |
+
+## 🛡️ Rastreabilidade e Resiliência (Logs)
+
+A controladora possui tratamento completo de exceções estruturado (`try-catch`), interagindo diretamente com a interface `ILogger`. Isto garante que:
+
+* **Detecção de Anomalias:** Tentativas de fraude ou envio de dados malformados geram alertas de aviso (`LogWarning`).
+* **Blindagem de Erros:** Falhas de rede externas e indisponibilidade de serviços terceiros geram logs de erro específicos (`LogError`), impedindo que o utilizador visualize mensagens nativas do sistema (*stack traces* confusas).
