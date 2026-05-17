@@ -247,6 +247,82 @@ namespace NutriFoodAPI.Controllers
         }
 
         /// <summary>
+        /// Atualiza as informações de um alimento validado existente.
+        /// </summary>
+        /// <remarks>
+        /// Substitui integralmente os dados do documento correspondente ao ID informado na URL no Firestore.
+        /// </remarks>
+        /// <param name="id">ID sequencial do alimento que será atualizado.</param>
+        /// <param name="alimentoAtualizado">Objeto contendo os novos dados do alimento.</param>
+        /// <response code="200">Alimento atualizado com sucesso.</response>
+        /// <response code="400">ID da URL não condiz com o ID do corpo da requisição ou dados malformados.</response>
+        /// <response code="404">Nenhum alimento foi encontrado com o ID informado para atualização.</response>
+        /// <response code="500">Erro interno no servidor ao tentar atualizar os dados no banco.</response>
+        [HttpPut("{id}")]
+        [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> Put(string id, [FromBody] AlimentoValidado alimentoAtualizado)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(id) || alimentoAtualizado == null)
+                {
+                    _logger.LogWarning("Tentativa de atualização com parâmetros nulos ou inválidos.");
+                    return BadRequest("Os dados da requisição e o ID são obrigatórios.");
+                }
+
+                // Proteção de integridade: Garante que o ID da URL é o mesmo ID do objeto sendo salvo
+                if (id != alimentoAtualizado.Id)
+                {
+                    _logger.LogWarning("Divergência de IDs identificada. " +
+                        "URL: '{IdUrl}', Body: '{IdBody}'", id, alimentoAtualizado.Id);
+                    return 
+                        BadRequest("O ID fornecido na URL não corresponde ao " +
+                        "ID do objeto enviado no corpo da requisição.");
+                }
+
+                _logger.LogInformation("Iniciando processo de atualização para o alimento " +
+                    "ID: {IdAlimento}", id);
+
+                // Delega a atualização para o Service, que irá verificar a existência do ID
+                // e realizar a substituição dos dados
+                bool atualizadoComSucesso = await 
+                    _firestoreService.AtualizarAlimento(alimentoAtualizado);
+
+                if (!atualizadoComSucesso)
+                {
+                    _logger.LogWarning("Falha ao atualizar. Alimento ID '{IdAlimento}' " +
+                        "não existe na base de dados.", id);
+                    return NotFound(new
+                    {
+                        mensagem = $"Não foi possível atualizar. Alimento com ID '{id}' " +
+                        $"não foi localizado no sistema."
+                    });
+                }
+
+                _logger.LogInformation("Alimento ID '{IdAlimento}' atualizado com sucesso" +
+                    " no Firestore.", id);
+                return Ok(new
+                {
+                    mensagem = $"Alimento com ID '{id}' foi atualizado com sucesso!",
+                    dados = alimentoAtualizado
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erro crítico no endpoint PUT ao tentar atualizar" +
+                    " o ID: {IdAlimento}", id);
+                return StatusCode(500, new
+                {
+                    mensagem = "Ocorreu um erro interno ao tentar atualizar o alimento. " +
+                    "Por favor, tente novamente mais tarde."
+                });
+            }
+        }
+
+        /// <summary>
         /// Remove um alimento validado do sistema através do seu ID Sequencial.
         /// </summary>
         /// <param name="id">O ID Sequencial do alimento a ser removido.</param>
