@@ -1,4 +1,10 @@
 # NutriFoodAPI — Módulo de Validação Nutricional
+---
+<div align="center">
+  <img src="Imagens/Tela_API.png" alt="Interface do Swagger da NutriFoodAPI" width="75%">
+</div>
+
+---
 
 Esta Web API foi desenvolvida em **ASP.NET Core** com o objetivo de centralizar a ingestão, validação de regras de negócio e a persistência de dados nutricionais coletados de APIs externas. O microsserviço atua de forma integrada com outras frentes de desenvolvimento (Squads), assegurando a qualidade e a rastreabilidade das informações antes de consolidadas no banco de dados Cloud Firestore.
 
