@@ -195,6 +195,41 @@ namespace NutriFoodAPI.Service
         }
 
         /// <summary>
+        /// Atualiza um alimento validado existente no Firestore substituindo integralmente seus dados.
+        /// </summary>
+        /// <param name="alimento">Objeto contendo os dados atualizados do alimento.</param>
+        /// <returns>Retorna true se o documento foi atualizado com sucesso; false se o documento não foi encontrado.</returns>
+        public async Task<bool> AtualizarAlimento(AlimentoValidado alimento)
+        {
+            try
+            {
+                // Aponta para o documento específico dentro da coleção usando o ID do alimento
+                DocumentReference docRef = _contexto.Database
+                    .Collection("AlimentosValidados")
+                    .Document(alimento.Id);
+
+                // Busca o snapshot do documento para verificar se ele existe antes de tentar atualizar
+                DocumentSnapshot snapshot = await docRef.GetSnapshotAsync();
+
+                // Se o documento não existir no Firestore, retorna false para a Controller
+                // disparar o 404 NotFound
+                if (!snapshot.Exists)
+                    return false;
+
+                // Executa a atualização sobrescrevendo o documento de forma assíncrona
+                await docRef.SetAsync(alimento, SetOptions.Overwrite);
+
+                return true;
+            }
+            catch (Exception)
+            {             
+                throw new 
+                    Exception("Falha de infraestrutura ao tentar atualizar " +
+                    "o registro no banco de dados.");
+            }
+        }
+
+        /// <summary>
         /// Exclui um alimento validado do Firestore utilizando o ID Sequencial.
         /// Retorna true se a exclusão foi feita ou false se o documento não existia.
         /// </summary>

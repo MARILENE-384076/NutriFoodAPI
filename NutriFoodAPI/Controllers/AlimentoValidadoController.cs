@@ -273,7 +273,7 @@ namespace NutriFoodAPI.Controllers
                     return BadRequest("Os dados da requisição e o ID são obrigatórios.");
                 }
 
-                // Proteção de integridade: Garante que o ID da URL é o mesmo ID do objeto sendo salvo
+                // Garante que o ID da URL seja o mesmo ID do objeto sendo salvo
                 if (id != alimentoAtualizado.Id)
                 {
                     _logger.LogWarning("Divergência de IDs identificada. " +
