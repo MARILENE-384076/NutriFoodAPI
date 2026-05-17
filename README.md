@@ -57,7 +57,7 @@ Para o armazenamento seguro e em tempo real dos alimentos validados, a API conso
 Na captura abaixo, é possível observar o registro `"arroz"` salvo com sucesso na coleção, contendo todos os dados nutricionais calculados pela API:
 
 <div align="center">
-  <img src="Imagens/Arroz.png" alt="Painel do Firebase Cloud Firestore" width="65%">
+  <img src="Imagens/RegistroDeArroz.png" alt="Painel do Firebase Cloud Firestore" width="65%">
 </div>
 
 ---
