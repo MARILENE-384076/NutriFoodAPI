@@ -255,18 +255,27 @@ Abaixo está o registro visual do comportamento da API durante a validação con
 
 | 1️⃣ Passo: Ingestão de Dados (POST) | 2️⃣ Passo: Validação da Persistência (GET) |
 | :---: | :---: |
-| ![Squad 1 - Requisição POST](Arroz_PostSquad1.png) | ![Squad 1 - Consulta GET](Arroz_GetSquad1.png) |
+|<img src="Imagens/Arroz_PostSquad1.png" alt="Squad 1 - Requisição POST" /> | <img src="Imagens/Arroz_GetSquad1.png" alt="Squad 1 - Consulta GET" /> |
 | **Cenário:** A Squad 1 realizou o envio dos dados via método `POST`. A API processou a requisição e retornou o status correto, porém com corpo vazio (`0 retorno` / sem payload de resposta). | **Cenário:** Para certificar que os dados foram de fato processados e salvos no Firestore, a equipe executou uma pesquisa via método `GET` buscando o registro inserido. |
 
 ---
+### 📊 Fluxo de Integração e Consumo - Squad 3
 
-### ⚠️ Alerta de Erro de Infraestrutura (SSL/TLS)
+Abaixo está o mapeamento visual de como a **Squad 3** consome os dados da API para renderizar o histórico de pesquisas e os dados nutricionais diretamente na interface do usuário.
+
+| 1️⃣ Passo:  Consulta Filtrada por Termo (GetByName) | 2️⃣ Passo: Listagem do Histórico do Banco (GetAll) |
+| :---: | :---: |
+| <img src="Imagens/ArrozGetSquad3.png" alt="Squad 3 - Listagem Geral" /> | <img src="Imagens/AlimentosBancoGetSquad3.png" alt="Squad 3 - Busca por Nome" /> |
+|**Cenário:** O usuário digita um termo específico (ex: "Arroz") no campo de busca e clica em pesquisar. A aplicação consome o endpoint `GET` por nome, trazendo de forma isolada os macronutrientes do alimento filtrado. |  **Cenário:** A interface da Squad 3 realiza uma requisição ao endpoint `GET` geral. A API retorna a lista completa de alimentos validados salvos no Firestore, permitindo preencher a tabela principal com múltiplos registros históricos.|
+
+---
+### ⚠️ Alerta de Erro de Infraestrutura (SSL/TLS)   AlimentosBancoGetSquad3
 
 Durante as tentativas de comunicação segura utilizando o protocolo padrão de produção, a aplicação cliente disparou a seguinte exceção impeditiva:
-
-![Erro de Conexão SSL](image_4350f2.png)
 
 > **Diagnóstico:** O erro `The SSL connection could not be established` confirma que o cliente rejeitou o aperto de mão (Handshake) do certificado do servidor. 
 > 
 > **Ação Cadastrada:** Para mitigar o bloqueio sem impactar o cronograma das Squads 1 e 3, o tráfego foi direcionado provisoriamente para o endpoint **HTTP plano** (`http://apinutrifood.runasp.net/api/AlimentoValidado`), contornando a checagem rígida de cadeias de certificação inválidas em ambiente de testes.
-  
+
+
+ alimentos validados salvos no Firestore, permitindo preencher a tabela principal com múltiplos registros históricos. 
