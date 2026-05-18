@@ -112,11 +112,29 @@ O terminal exibirá os endereços locais em que a API está à escuta.
 > 💡 **Nota:** Certifique-se de usar o protocolo correto (`http` ou `https`) ao realizar as requisições para a API.
 
 ---
- ## 🌐 Documentação dos Endpoints (Contrato da API)
+ ## 📄 Documentação dos Endpoints (Contrato da API)
+ 
+ Este documento especifica o contrato de integração e as diretrizes de comunicação para a controller de validação nutricional do ecossistema **NutriFoodAPI**.
 
-**Classe Controladora:** `AlimentoValidadoController`  
-**Rota base:** `/api/AlimentoValidado`
+### Informações Gerais da Rota
+| Componente | Detalhe |
+| :--- | :--- |
+| **Classe Controladora** | `AlimentoValidadoController` |
+| **Rota Base** | `/api/AlimentoValidado` |
+| **Ambiente de Testes (Base URL)** | `http://apinutrifood.runasp.net` |
+| **Protocolo de Comunicação** | HTTP (Sem exigência de SSL para testes locais/inter-squads) |
 
+## 🔀 Definição dos Endpoints
+
+### 1. Ingestão e Validação de Alimentos (Squad 1)
+Envia os dados nutricionais brutos coletados para que a API execute as regras de validação de negócio e realize a persistência no banco de dados Cloud Firestore.
+
+* **URL do Endpoint:** `http://apinutrifood.runasp.net/api/AlimentoValidado`
+* **Método HTTP:** `POST`
+* **Headers Obrigatórios:**
+  ```http
+  Content-Type: application/json
+  
 ---
 
 ### 1. Criar e Validar Alimento
@@ -229,3 +247,26 @@ O projeto expõe nativamente a documentação através do padrão OpenAPI utiliz
 * **⚡ Testes em Tempo Real (Interactive Playground):** Permite realizar chamadas diretamente nos endpoints HTTP (`POST`, `GET`, `PUT`, `DELETE`) sem a necessidade de instalar ferramentas externas como o Postman ou Insomnia.
 * **📜 Garantia de Contrato Único:** Os códigos de estado documentados (201, 400, 404, 502, 500) e os tipos de dados aceites são exibidos visualmente de forma clara para as outras equipas (Squads).
 * **🔄 Documentação Viva:** Qualquer alteração efetuada nos comentários XML da `AlimentoValidadoController` reflete-se automaticamente na interface visual na próxima compilação, prevenindo documentações desatualizadas em ficheiros externos de texto.
+ ---
+
+ ### 🔄 Fluxo de Teste de Integração (Squad 1)
+
+Abaixo está o registro visual do comportamento da API durante a validação conduzida pela **Squad 1**. O teste consistiu em submeter um novo alimento ("Arroz") e, em seguida, validar a sua persistência no banco de dados.
+
+| 1️⃣ Passo: Ingestão de Dados (POST) | 2️⃣ Passo: Validação da Persistência (GET) |
+| :---: | :---: |
+| ![Squad 1 - Requisição POST](Arroz_PostSquad1.png) | ![Squad 1 - Consulta GET](Arroz_GetSquad1.png) |
+| **Cenário:** A Squad 1 realizou o envio dos dados via método `POST`. A API processou a requisição e retornou o status correto, porém com corpo vazio (`0 retorno` / sem payload de resposta). | **Cenário:** Para certificar que os dados foram de fato processados e salvos no Firestore, a equipe executou uma pesquisa via método `GET` buscando o registro inserido. |
+
+---
+
+### ⚠️ Alerta de Erro de Infraestrutura (SSL/TLS)
+
+Durante as tentativas de comunicação segura utilizando o protocolo padrão de produção, a aplicação cliente disparou a seguinte exceção impeditiva:
+
+![Erro de Conexão SSL](image_4350f2.png)
+
+> **Diagnóstico:** O erro `The SSL connection could not be established` confirma que o cliente rejeitou o aperto de mão (Handshake) do certificado do servidor. 
+> 
+> **Ação Cadastrada:** Para mitigar o bloqueio sem impactar o cronograma das Squads 1 e 3, o tráfego foi direcionado provisoriamente para o endpoint **HTTP plano** (`http://apinutrifood.runasp.net/api/AlimentoValidado`), contornando a checagem rígida de cadeias de certificação inválidas em ambiente de testes.
+  
